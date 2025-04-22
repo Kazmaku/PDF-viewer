@@ -1,13 +1,12 @@
 # PDF 檔案檢視器
 
-一個簡單易用的網頁式 PDF 檢視器，可以選擇資料夾並瀏覽其中的所有 PDF 檔案。
+因為期中考很多slides與題目要看而生的repo
 
 ## 功能特點
 
-- ✅ 選擇資料夾載入多個 PDF 檔案
-- ✅ 下拉選單切換不同 PDF 檔案
-- ✅ 即時預覽 PDF 內容
-- ✅ 支援大型 PDF 檔案
+- 選擇資料夾載入多個 PDF 檔案
+- 下拉選單切換不同 PDF 檔案
+- 即時預覽 PDF 內容
 
 ## 安裝步驟
 
@@ -27,7 +26,21 @@ npm install
 npm install -g pm2
 ```
 
-### 4. 啟動伺服器
+### 4. 新增server.js
+```
+const express = require('express');
+const path = require('path');
+const app = express();
+const port = 3000;
+
+app.use(express.static('public'));
+
+app.listen(port, () => {
+    console.log(`伺服器運行於 http://localhost:${port}`);
+});
+```
+
+### 5. 啟動伺服器
 
 #### 開發環境
 ```bash
@@ -71,14 +84,6 @@ pdf-viewer/
 - Node.js 14.x 或更高版本
 - 現代瀏覽器（Chrome、Firefox、Edge、Safari）
 
-## 瀏覽器支援
-
-| 瀏覽器 | 版本 |
-|--------|------|
-| Chrome | 60+ |
-| Firefox | 60+ |
-| Safari | 13+ |
-| Edge | 79+ |
 
 ## 注意事項
 
@@ -87,18 +92,7 @@ pdf-viewer/
 - 部分舊版瀏覽器可能不支援資料夾選擇功能
 - 大型 PDF 檔案可能需要較長載入時間
 
-## 開發指令
 
-### 開發模式
-```bash
-npm run dev  # 需另外設定 nodemon
-```
-
-### 生產模式
-```bash
-npm start     # node server.js
-npm run prod  # pm2 start server.js
-```
 
 ## PM2 管理指令
 
