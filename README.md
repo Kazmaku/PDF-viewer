@@ -38,7 +38,7 @@ node server.js
 ```bash
 pm2 start server.js --name "pdf-viewer"
 pm2 save
-pm2 startup  # 設定開機自動啟動
+pm2 startup  # 設定開機自動啟動(非必要
 ```
 
 ## 專案結構
