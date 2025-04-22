@@ -15,7 +15,6 @@
                 this.selectedPDF = '';
                 this.isSideLayout = false;
 
-                // 綁定方法以保留 this 上下文
                 this.handleFileInput = this.handleFileInput.bind(this);
                 this.displaySelectedPDF = this.displaySelectedPDF.bind(this);
 
@@ -95,7 +94,6 @@
                 const files = e.target.files;
                 this.pdfFiles = [];
 
-                // 過濾 PDF 檔案
                 for (let i = 0; i < files.length; i++) {
                     if (files[i].name.toLowerCase().endsWith('.pdf')) {
                         this.pdfFiles.push(files[i]);
@@ -296,7 +294,6 @@
             gap: 1rem;
         }
 
-        /* 響應式布局 */
         @media (min-width: 768px) {
             .content-wrapper.side-layout {
                 flex-direction: row;
@@ -331,7 +328,6 @@
             }
         }
 
-        /* 動畫效果 */
         @keyframes fadeIn {
             from {
                 opacity: 0;
