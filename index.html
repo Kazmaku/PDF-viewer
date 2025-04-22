@@ -13,10 +13,13 @@
                 this.pdfFiles = [];
                 this.currentFolder = '';
                 this.selectedPDF = '';
-                this.isSideLayout = false;
+                this.isDragging = false;
 
                 this.handleFileInput = this.handleFileInput.bind(this);
                 this.displaySelectedPDF = this.displaySelectedPDF.bind(this);
+                this.handleDragOver = this.handleDragOver.bind(this);
+                this.handleDragLeave = this.handleDragLeave.bind(this);
+                this.handleDrop = this.handleDrop.bind(this);
 
                 this.render();
             }
@@ -24,68 +27,92 @@
             template() {
                 return html`
                     <div class="container">
-                        <header class="header">
-                            <h1>PDF 檔案檢視器</h1>
-                            <p class="subtitle">快速瀏覽與管理 PDF 文件</p>
-                        </header>
-                        
-                        <main class="content-wrapper ${this.isSideLayout ? 'side-layout' : ''}">
-                            <aside class="controls">
-                                <div class="upload-section">
-                                    <input 
-                                        type="file" 
-                                        id="file-input" 
-                                        accept=".pdf" 
-                                        multiple 
-                                        webkitdirectory
-                                        @change=${this.handleFileInput}
+                        ${!this.pdfFiles.length ? html`
+                            <div class="upload-card">
+                                <h1>PDF 檔案檢視器</h1>
+                                <p class="subtitle">快速瀏覽與管理 PDF 文件</p>
+                                <input 
+                                    type="file" 
+                                    id="file-input" 
+                                    accept=".pdf" 
+                                    multiple 
+                                    webkitdirectory
+                                    @change=${this.handleFileInput}
+                                >
+                                <button 
+                                    class="upload-btn" 
+                                    @click=${() => document.getElementById('file-input').click()}
+                                >
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="17 8 12 3 7 8"></polyline>
+                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                                    </svg>
+                                    選擇資料夾
+                                </button>
+                            </div>
+                        ` : html`
+                            <main class="content-wrapper side-layout">
+                                <aside class="controls">
+                                    <div 
+                                        class="upload-area ${this.isDragging ? 'dragging' : ''}"
+                                        @dragover=${this.handleDragOver}
+                                        @dragleave=${this.handleDragLeave}
+                                        @drop=${this.handleDrop}
+                                        @click=${() => document.getElementById('folder-input').click()}
                                     >
-                                    <button 
-                                        class="upload-btn" 
-                                        @click=${() => document.getElementById('file-input').click()}
-                                    >
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <input 
+                                            type="file" 
+                                            id="folder-input" 
+                                            accept=".pdf" 
+                                            multiple 
+                                            webkitdirectory
+                                            style="display: none;"
+                                            @change=${this.handleFileInput}
+                                        >
+                                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                             <polyline points="17 8 12 3 7 8"></polyline>
                                             <line x1="12" y1="3" x2="12" y2="15"></line>
                                         </svg>
-                                        選擇資料夾
-                                    </button>
-                                </div>
+                                        <p class="upload-text">拖曳資料夾到此處</p>
+                                        <p class="upload-subtext">或點擊選擇資料夾</p>
+                                    </div>
+                                    
+                                    <div class="select-wrapper">
+                                        <select 
+                                            id="pdf-select" 
+                                            @change=${this.displaySelectedPDF}
+                                        >
+                                            <option value="">請選擇 PDF 檔案</option>
+                                            ${this.pdfFiles.map((file, index) => html`
+                                                <option value=${index}>${file.webkitRelativePath || file.name}</option>
+                                            `)}
+                                        </select>
+                                        <div class="file-count">
+                                            找到 ${this.pdfFiles.length} 個 PDF 檔案
+                                        </div>
+                                    </div>
+                                </aside>
                                 
-                                <div class="select-wrapper">
-                                    <select 
-                                        id="pdf-select" 
-                                        @change=${this.displaySelectedPDF}
-                                    >
-                                        <option value="">請選擇 PDF 檔案</option>
-                                        ${this.pdfFiles.map((file, index) => html`
-                                            <option value=${index}>${file.webkitRelativePath || file.name}</option>
-                                        `)}
-                                    </select>
-                                    <div class="file-count">
-                                        ${this.pdfFiles.length ? `找到 ${this.pdfFiles.length} 個 PDF 檔案` : '尚未選擇資料夾'}
-                                    </div>
+                                <div class="viewer-wrapper">
+                                    ${this.selectedPDF ? html`
+                                        <iframe id="pdf-viewer" src=${this.selectedPDF}></iframe>
+                                    ` : html`
+                                        <div class="viewer-placeholder">
+                                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                <polyline points="14 2 14 8 20 8"></polyline>
+                                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                                <polyline points="10 9 9 9 8 9"></polyline>
+                                            </svg>
+                                            <p>選擇 PDF 檔案以開始檢視</p>
+                                        </div>
+                                    `}
                                 </div>
-                            </aside>
-                            
-                            <div class="viewer-wrapper">
-                                ${this.selectedPDF ? html`
-                                    <iframe id="pdf-viewer" src=${this.selectedPDF}></iframe>
-                                ` : html`
-                                    <div class="viewer-placeholder">
-                                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                            <polyline points="14 2 14 8 20 8"></polyline>
-                                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                                            <polyline points="10 9 9 9 8 9"></polyline>
-                                        </svg>
-                                        <p>選擇 PDF 檔案以開始檢視</p>
-                                    </div>
-                                `}
-                            </div>
-                        </main>
+                            </main>
+                        `}
                     </div>
                 `;
             }
@@ -103,16 +130,52 @@
                 this.render();
             }
 
+            handleDragOver(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.isDragging = true;
+                this.render();
+            }
+
+            handleDragLeave(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.isDragging = false;
+                this.render();
+            }
+
+            handleDrop(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.isDragging = false;
+
+                const items = e.dataTransfer.items;
+                const files = [];
+
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    if (item.kind === 'file') {
+                        const file = item.getAsFile();
+                        if (file.name.toLowerCase().endsWith('.pdf')) {
+                            files.push(file);
+                        }
+                    }
+                }
+
+                if (files.length > 0) {
+                    this.pdfFiles = files;
+                    this.render();
+                }
+            }
+
             displaySelectedPDF(e) {
                 const select = e.target;
                 if (select.value === "") {
                     this.selectedPDF = '';
-                    this.isSideLayout = false;
                 } else {
                     const selectedFile = this.pdfFiles[select.value];
                     if (selectedFile) {
                         this.selectedPDF = URL.createObjectURL(selectedFile);
-                        this.isSideLayout = true;
                     }
                 }
                 this.render();
@@ -175,16 +238,17 @@
             padding: 1rem;
         }
 
-        .header {
+        .upload-card {
             background: var(--surface-color);
-            padding: 1.5rem;
+            padding: 2.5rem;
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow);
-            margin-bottom: 1.5rem;
+            max-width: 500px;
+            margin: 4rem auto;
             text-align: center;
         }
 
-        .header h1 {
+        .upload-card h1 {
             font-size: 2rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
@@ -193,6 +257,7 @@
         .subtitle {
             color: var(--text-secondary);
             font-size: 1rem;
+            margin-bottom: 2rem;
         }
 
         .content-wrapper {
@@ -209,11 +274,46 @@
             box-shadow: var(--shadow);
         }
 
-        .upload-section {
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius);
+            padding: 2rem;
+            text-align: center;
             margin-bottom: 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        #file-input {
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(26, 115, 232, 0.05);
+        }
+
+        .upload-area.dragging {
+            border-color: var(--primary-color);
+            background-color: rgba(26, 115, 232, 0.1);
+        }
+
+        .upload-area svg {
+            color: var(--primary-color);
+        }
+
+        .upload-text {
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .upload-subtext {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        #file-input,
+        #folder-input {
             display: none;
         }
 
@@ -314,11 +414,6 @@
                 padding: 2rem;
             }
 
-            .header {
-                padding: 2rem;
-                margin-bottom: 2rem;
-            }
-
             .controls {
                 padding: 2rem;
             }
@@ -340,7 +435,7 @@
             }
         }
 
-        .history-item,
+        .upload-card,
         .viewer-wrapper {
             animation: fadeIn 0.3s ease-out;
         }
