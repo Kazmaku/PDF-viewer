@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF 檔案檢視器</title>
+    <script type="module">
+        import { html, render } from 'https://cdn.jsdelivr.net/npm/lit-html@2.8.0/lit-html.js';
+
+        class PDFViewer {
+            constructor() {
+                this.pdfFiles = [];
+                this.currentFolder = '';
+                this.selectedPDF = '';
+                this.isSideLayout = false;
+
+                // 綁定方法以保留 this 上下文
+                this.handleFileInput = this.handleFileInput.bind(this);
+                this.displaySelectedPDF = this.displaySelectedPDF.bind(this);
+
+                this.render();
+            }
+
+            template() {
+                return html`
+                    <div class="container">
+                        <header class="header">
+                            <h1>PDF 檔案檢視器</h1>
+                            <p class="subtitle">快速瀏覽與管理 PDF 文件</p>
+                        </header>
+                        
+                        <main class="content-wrapper ${this.isSideLayout ? 'side-layout' : ''}">
+                            <aside class="controls">
+                                <div class="upload-section">
+                                    <input 
+                                        type="file" 
+                                        id="file-input" 
+                                        accept=".pdf" 
+                                        multiple 
+                                        webkitdirectory
+                                        @change=${this.handleFileInput}
+                                    >
+                                    <button 
+                                        class="upload-btn" 
+                                        @click=${() => document.getElementById('file-input').click()}
+                                    >
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="17 8 12 3 7 8"></polyline>
+                                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                                        </svg>
+                                        選擇資料夾
+                                    </button>
+                                </div>
+                                
+                                <div class="select-wrapper">
+                                    <select 
+                                        id="pdf-select" 
+                                        @change=${this.displaySelectedPDF}
+                                    >
+                                        <option value="">請選擇 PDF 檔案</option>
+                                        ${this.pdfFiles.map((file, index) => html`
+                                            <option value=${index}>${file.webkitRelativePath || file.name}</option>
+                                        `)}
+                                    </select>
+                                    <div class="file-count">
+                                        ${this.pdfFiles.length ? `找到 ${this.pdfFiles.length} 個 PDF 檔案` : '尚未選擇資料夾'}
+                                    </div>
+                                </div>
+                            </aside>
+                            
+                            <div class="viewer-wrapper">
+                                ${this.selectedPDF ? html`
+                                    <iframe id="pdf-viewer" src=${this.selectedPDF}></iframe>
+                                ` : html`
+                                    <div class="viewer-placeholder">
+                                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14 2 14 8 20 8"></polyline>
+                                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                                            <polyline points="10 9 9 9 8 9"></polyline>
+                                        </svg>
+                                        <p>選擇 PDF 檔案以開始檢視</p>
+                                    </div>
+                                `}
+                            </div>
+                        </main>
+                    </div>
+                `;
+            }
+
+            handleFileInput(e) {
+                const files = e.target.files;
+                this.pdfFiles = [];
+
+                // 過濾 PDF 檔案
+                for (let i = 0; i < files.length; i++) {
+                    if (files[i].name.toLowerCase().endsWith('.pdf')) {
+                        this.pdfFiles.push(files[i]);
+                    }
+                }
+
+                this.render();
+            }
+
+            displaySelectedPDF(e) {
+                const select = e.target;
+                if (select.value === "") {
+                    this.selectedPDF = '';
+                    this.isSideLayout = false;
+                } else {
+                    const selectedFile = this.pdfFiles[select.value];
+                    if (selectedFile) {
+                        this.selectedPDF = URL.createObjectURL(selectedFile);
+                        this.isSideLayout = true;
+                    }
+                }
+                this.render();
+            }
+
+            render() {
+                render(this.template(), document.body);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            new PDFViewer();
+        });
+    </script>
+    <style>
+        :root {
+            --primary-color: #1a73e8;
+            --primary-dark: #1557b0;
+            --bg-color: #f8fafc;
+            --surface-color: #ffffff;
+            --text-color: #334155;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --radius: 8px;
+            --radius-lg: 12px;
+            --transition: all 0.3s ease;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary-color: #60a5fa;
+                --primary-dark: #3b82f6;
+                --bg-color: #0f172a;
+                --surface-color: #1e293b;
+                --text-color: #f1f5f9;
+                --text-secondary: #94a3b8;
+                --border-color: #334155;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .header {
+            background: var(--surface-color);
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .content-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .controls {
+            background: var(--surface-color);
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+        }
+
+        .upload-section {
+            margin-bottom: 1.5rem;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            width: 100%;
+            background: var(--primary-color);
+            color: white;
+            padding: 0.875rem 1.5rem;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .upload-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .upload-btn:active {
+            transform: translateY(0);
+        }
+
+        .select-wrapper {
+            margin-bottom: 1.5rem;
+        }
+
+        #pdf-select {
+            width: 100%;
+            padding: 0.875rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            font-size: 1rem;
+            background: var(--surface-color);
+            color: var(--text-color);
+            transition: var(--transition);
+        }
+
+        #pdf-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.2);
+        }
+
+        .file-count {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .viewer-wrapper {
+            background: var(--surface-color);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            min-height: 500px;
+        }
+
+        #pdf-viewer {
+            width: 100%;
+            height: 80vh;
+            border: none;
+        }
+
+        .viewer-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 80vh;
+            color: var(--text-secondary);
+            gap: 1rem;
+        }
+
+        /* 響應式布局 */
+        @media (min-width: 768px) {
+            .content-wrapper.side-layout {
+                flex-direction: row;
+            }
+
+            .side-layout .controls {
+                width: 320px;
+                flex-shrink: 0;
+            }
+
+            .side-layout .viewer-wrapper {
+                flex: 1;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .container {
+                padding: 2rem;
+            }
+
+            .header {
+                padding: 2rem;
+                margin-bottom: 2rem;
+            }
+
+            .controls {
+                padding: 2rem;
+            }
+
+            .side-layout .controls {
+                width: 360px;
+            }
+        }
+
+        /* 動畫效果 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .history-item,
+        .viewer-wrapper {
+            animation: fadeIn 0.3s ease-out;
+        }
+    </style>
+</head>
+
+<body>
+</body>
+
+</html>
