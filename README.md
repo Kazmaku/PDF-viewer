@@ -13,7 +13,7 @@
 
 ### 1. 複製專案
 ```bash
-git clone <repository-url>
+git clone https://github.com/Kazmaku/PDF-viewer.git
 cd pdf-viewer
 ```
 
